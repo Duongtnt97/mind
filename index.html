@@ -105,6 +105,10 @@
         margin-bottom: 20px;
         border: 2px solid white;
         border-radius: 8px;
+        /* Xoay 90 độ ngược chiều kim đồng hồ */
+  transform: rotate(-90deg);
+  /* Đảm bảo hình ảnh vẫn nằm trong khung sau khi xoay */
+  transform-origin: center;
       }
       
       /* Văn bản hướng dẫn */
@@ -125,7 +129,7 @@
     
     <!-- Overlay hướng dẫn người dùng cách sử dụng -->
     <div id="example-scanning-overlay">
-      <img src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" alt="Target image" rotation="0 0 -90">
+      <img src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" alt="Target image">
       <p>Hướng camera vào hình ảnh bên trên để bắt đầu</p>
     </div>
     
@@ -177,7 +181,7 @@
           Điều này giúp người dùng xác nhận đúng vị trí tracking
           height="0.552" width="1": Tỷ lệ khung hình chính xác của hình ảnh mẫu
         -->
-        <a-plane src="#card" position="0 0 0" height="1" width="0.552" rotation="0 0 -90"></a-plane>
+        <a-plane src="#card" position="0 0 0" height="1" width="0.552" rotation="0 0 90"></a-plane>
         
         <!-- 
           Mô hình 3D sẽ xuất hiện phía trên hình ảnh mục tiêu
