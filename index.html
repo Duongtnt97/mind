@@ -2,9 +2,21 @@
 <html>
   <head>
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <!-- 
+      Meta viewport đảm bảo trang web hiển thị đúng kích thước trên thiết bị di động.
+      Điều này rất quan trọng cho trải nghiệm AR trên điện thoại.
+    -->
+    
+    <!-- Thư viện A-Frame - framework để tạo nội dung 3D và WebXR -->
     <script src="https://aframe.io/releases/1.6.0/aframe.min.js"></script>
+    
+    <!-- Thư viện MindAR cho chức năng Image Tracking -->
     <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
+    
     <style>
+      /* 
+        Overlay khi đang tải - hiển thị khi ứng dụng đang khởi tạo camera và tải tài nguyên
+      */
       #example-loading-overlay {
         position: fixed;
         top: 0;
@@ -16,16 +28,23 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 9999;
+        z-index: 9999; /* Đảm bảo overlay nằm trên cùng */
         color: white;
         font-family: Arial, sans-serif;
         transition: opacity 0.3s ease;
       }
       
+      /*
+        Khi có class "hidden", overlay sẽ biến mất.
+        MindAR tự động thêm class này khi hoàn tất việc tải.
+      */
       #example-loading-overlay.hidden {
         display: none;
       }
       
+      /* 
+        Tạo hiệu ứng spinner xoay tròn trước khi hiển thị văn bản
+      */
       #example-loading-overlay::before {
         content: "";
         width: 40px;
@@ -37,6 +56,7 @@
         margin-bottom: 15px;
       }
       
+      /* Animation cho spinner */
       @keyframes spin {
         0% { transform: rotate(0deg); }
         100% { transform: rotate(360deg); }
@@ -49,6 +69,9 @@
         padding: 0 20px;
       }
       
+      /* 
+        Overlay hướng dẫn người dùng cách sử dụng tính năng quét hình ảnh
+      */
       #example-scanning-overlay {
         position: fixed;
         top: 0;
@@ -60,17 +83,22 @@
         flex-direction: column;
         justify-content: center;
         align-items: center;
-        z-index: 9998;
+        z-index: 9998; /* Thấp hơn loading overlay, nhưng vẫn nằm trên scene */
         color: white;
         font-family: Arial, sans-serif;
         text-align: center;
         padding: 20px;
       }
       
+      /*
+        Khi có class "hidden", overlay hướng dẫn sẽ biến mất.
+        MindAR tự động thêm class này khi phát hiện được hình ảnh mục tiêu.
+      */
       #example-scanning-overlay.hidden {
         display: none;
       }
       
+      /* Hiển thị hình ảnh mẫu để người dùng biết cần quét hình gì */
       #example-scanning-overlay img {
         max-width: 80%;
         max-height: 50%;
@@ -79,6 +107,7 @@
         border-radius: 8px;
       }
       
+      /* Văn bản hướng dẫn */
       #example-scanning-overlay p {
         font-size: 18px;
         margin: 0;
@@ -89,30 +118,80 @@
     </style>
   </head>
   <body>
+    <!-- Overlay hiển thị khi đang tải ứng dụng AR -->
     <div id="example-loading-overlay">
       <p>Đang khởi tạo AR...</p>
     </div>
     
+    <!-- Overlay hướng dẫn người dùng cách sử dụng -->
     <div id="example-scanning-overlay">
       <img src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" alt="Target image">
       <p>Hướng camera vào hình ảnh bên trên để bắt đầu</p>
     </div>
     
+    <!-- 
+      A-Scene: Phần chính của ứng dụng AR
+      Các thuộc tính quan trọng:
+      - mindar-image: Cấu hình cho image tracking
+        + imageTargetSrc: Đường dẫn tới file .mind chứa dữ liệu hình ảnh mục tiêu
+        + uiLoading: ID của element hiển thị khi đang tải
+        + uiScanning: ID của element hướng dẫn người dùng
+      - color-space="sRGB": Đảm bảo màu sắc hiển thị chính xác
+      - renderer="colorManagement: true, physicallyCorrectLights": Cải thiện chất lượng render
+      - vr-mode-ui="enabled: false": Tắt UI chế độ VR vì không cần thiết
+      - device-orientation-permission-ui="enabled: false": Tắt popup xin quyền hướng thiết bị
+    -->
     <a-scene mindar-image="imageTargetSrc: https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.mind; uiLoading: #example-loading-overlay; uiScanning: #example-scanning-overlay;" 
              color-space="sRGB" 
              renderer="colorManagement: true, physicallyCorrectLights" 
              vr-mode-ui="enabled: false" 
              device-orientation-permission-ui="enabled: false">
       
+      <!-- 
+        A-Assets: Nơi chứa tất cả tài nguyên (hình ảnh, mô hình 3D) được tải trước
+        Việc tải trước giúp tránh giật lag khi hiển thị AR
+      -->
       <a-assets>
+        <!-- Hình ảnh mẫu sử dụng làm target -->
         <img id="card" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/card.png" />
+        
+        <!-- Mô hình 3D định dạng glTF để hiển thị khi nhận diện thành công -->
         <a-asset-item id="avatarModel" src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.2.5/examples/image-tracking/assets/card-example/softmind/scene.gltf"></a-asset-item>
       </a-assets>
 
+      <!-- 
+        Camera AR: Vị trí (0,0,0) là vị trí mặc định
+        look-controls="enabled: false": Tắt điều khiển xoay camera bằng cảm biến
+        vì chúng ta muốn camera theo dõi hình ảnh thay vì xoay tự do
+      -->
       <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
 
+      <!-- 
+        Entity chứa các đối tượng được gắn với hình ảnh mục tiêu
+        mindar-image-target="targetIndex: 0": Gắn với target đầu tiên trong file .mind
+        Khi hình ảnh được nhận diện, tất cả đối tượng bên trong sẽ được hiển thị
+      -->
       <a-entity mindar-image-target="targetIndex: 0">
-        <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="0 0 0"></a-plane>
+        <!-- 
+          Hiển thị hình ảnh gốc ngay trên bề mặt được nhận diện
+          Điều này giúp người dùng xác nhận đúng vị trí tracking
+          height="0.552" width="1": Tỷ lệ khung hình chính xác của hình ảnh mẫu
+        -->
+        <a-plane src="#card" position="0 0 0" height="0.552" width="1" rotation="-90 0 0"></a-plane>
+        
+        <!-- 
+          Mô hình 3D sẽ xuất hiện phía trên hình ảnh mục tiêu
+          - rotation="0 0 0": Không xoay ban đầu
+          - position="0 0 0.1": Đặt phía trên hình ảnh một chút (trục z)
+          - scale="0.005 0.005 0.005": Tỷ lệ thu nhỏ để phù hợp với kích thước hình ảnh
+          - animation: Tạo hiệu ứng chuyển động lơ lửng
+            + property: position: Hoạt ảnh thay đổi vị trí
+            + to: 0 0.1 0.1: Điểm đến của hoạt ảnh
+            + dur: 1000: Thời gian 1000ms (1 giây)
+            + easing: easeInOutQuad: Kiểu chuyển động mượt
+            + loop: true: Lặp vô tận
+            + dir: alternate: Qua lại giữa điểm bắt đầu và kết thúc
+        -->
         <a-gltf-model rotation="0 0 0" position="0 0 0.1" scale="0.005 0.005 0.005" src="#avatarModel"
           animation="property: position; to: 0 0.1 0.1; dur: 1000; easing: easeInOutQuad; loop: true; dir: alternate">
         </a-gltf-model>
